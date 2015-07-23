@@ -34,12 +34,16 @@ public class Updater {
 	}
 	public boolean isCaseSensitive() {
 		return caseSensitive;
-	}	
+	}
 	public Path getLocalUpdatePath() {
 		return localUpdatePath;
 	}
 	public Updater getInstance() {
 		return instance;
+	}
+	
+	public void fetchRemoteVersion() {
+		
 	}
 	
 }
