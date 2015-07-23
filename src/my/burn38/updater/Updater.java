@@ -6,34 +6,37 @@ import java.nio.file.Path;
 public class Updater {
 
 	private Updater instance = null;
-	private String currentVersion = null;
+	private String localVersion = null, remoteVersion = null;
 	private boolean caseSensitive = false;
-	private URL versionFile = null, fileToDownload = null;
-	private Path whereToCopy = null;
+	private URL remoteVersionURL = null, remoteUpdateURL = null;
+	private Path localUpdatePath = null;
 	
-	public Updater(String currentVersion, boolean caseSensitive, URL versionFile, URL fileToDownload, Path whereToCopyUpdate) {
+	public Updater(String localVersion, boolean caseSensitive, URL remoteVersionURL, URL remoteUpdateURL, Path localUpdatePath) {
 		this.instance = this;
-		this.currentVersion = currentVersion;
+		this.localVersion = localVersion;
 		this.caseSensitive = caseSensitive;
-		this.versionFile = versionFile;
-		this.fileToDownload = fileToDownload;
-		this.whereToCopy = whereToCopyUpdate;
+		this.remoteVersionURL = remoteVersionURL;
+		this.remoteUpdateURL = remoteUpdateURL;
+		this.localUpdatePath = localUpdatePath;
 	}
 	
-	public String getCurrentVersion() {
-		return currentVersion;
+	public String getLocalVersion() {
+		return localVersion;
+	}
+	public String getRemoteVersion() {
+		return remoteVersion;
+	}
+	public URL getRemoteVersionURL() {
+		return remoteVersionURL;
+	}
+	public URL getRemoteUpdateURL() {
+		return remoteUpdateURL;
 	}
 	public boolean isCaseSensitive() {
 		return caseSensitive;
-	}
-	public URL getVersionFileURL() {
-		return versionFile;
-	}
-	public URL getFileToDownloadURL() {
-		return fileToDownload;
-	}
-	public Path getWhereToCopyUpdatePath() {
-		return whereToCopy;
+	}	
+	public Path getLocalUpdatePath() {
+		return localUpdatePath;
 	}
 	public Updater getInstance() {
 		return instance;
