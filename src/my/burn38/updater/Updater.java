@@ -16,6 +16,9 @@ public class Updater {
 	private boolean caseSensitive = false;
 	private URL remoteUpdateURL = null;
 	private File localUpdateFile = null;
+	private String appName = null;
+	private boolean hasUpdated = false;
+	private boolean isUpdated = false;
 	
 	public Updater(String localVersion, boolean caseSensitive, URL remoteUpdateURL, File localUpdateFile){
 		System.out.println("Creating new updater, please wait...");
@@ -25,15 +28,25 @@ public class Updater {
 		this.remoteUpdateURL = remoteUpdateURL;
 		this.localUpdateFile = localUpdateFile;
 		System.out.println("New updater was created: ");
-		String remoteVersion = "`NULL`"; try {fetchRemoteVersion();} catch (IOException ex){remoteVersion = "VERSION_NOT_FOUND";ex.printStackTrace();}; 
+		String remoteVersion = "`NULL`"; try {fetchRemoteVersion();remoteVersion=this.remoteVersion;} catch (IOException ex){remoteVersion = "VERSION_NOT_FOUND";ex.printStackTrace();};
 		System.out.println("VERSION: "+localVersion+" -> "+remoteVersion);
 		System.out.println("FILE: "+remoteUpdateURL.toString()+" -> "+localUpdateFile.getPath());
+		appName = "["+appName+"] ";
+		if (shouldUpdate(remoteVersion)) {
+			System.out.println(appName+" updating to "+remoteVersion);
+			update();
+		} else {
+			System.out.println(appName+" is up to date");
+			isUpdated = true;
+		}
 	}
 	
-	public static void main(String[] args) {
-		
+	public boolean hasUpdated() {
+		return hasUpdated;
 	}
-	
+	public boolean isUptoDate() {
+		return isUpdated;
+	}
 	public String getLocalVersion() {
 		return localVersion;
 	}
@@ -84,6 +97,8 @@ public class Updater {
 				
 				System.out.println((dlFile == null ? "(NULL_FILE)" : "") +"VERSION FILE URL GOTTEN: "+getLine(dlFile, "version"));
 				String version_link = getLine(dlFile, "version");
+				String update_link = getLine(dlFile, "update");
+				this.remoteUpdateURL = new URL(update_link);
 				URL versionURL = new URL(version_link);
 				dlFile.delete();
 				dlFile = downloadFile("plugin.yml", versionURL);
@@ -91,7 +106,7 @@ public class Updater {
 		} else System.out.println("ERROR: FILE NOT DOWNLOADED");
 		
 		this.remoteVersion = getLine(dlFile, "version");
-		System.out.println(this.remoteVersion);
+		this.appName = getLine(dlFile, "name");
 		dlFile.delete();
 	}
 	
@@ -104,7 +119,7 @@ public class Updater {
 				if (line.startsWith(str+": ")) {
 					br.close();
 					fis.close();
-					String url = line.substring("version: ".length());
+					String url = line.substring(str.length()+": ".length());
 					url = url.endsWith("\"") ? url.substring(0, url.length()-1) : url;
 					url = url.startsWith("\"") ? url.substring(1, url.length()) : url;
 					return url;
@@ -116,6 +131,46 @@ public class Updater {
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "error while reading file";
+		}
+	}
+	
+	public String getHigherVersion(String oldVersion, String newVersion) {
+		String v_old = oldVersion; String v_new = newVersion;
+		String letters = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVv";
+		for (int i = 0; i < letters.length(); i++) {
+			if (oldVersion.contains(Character.toString(letters.charAt(i)))) oldVersion.replaceAll(Character.toString(letters.charAt(i)), Integer.toString(i));
+			if (newVersion.contains(Character.toString(letters.charAt(i)))) newVersion.replaceAll(Character.toString(letters.charAt(i)), Integer.toString(i));
+		}
+		double oldV=1.0D, newV=0.0D;
+		try {
+			oldV= Double.parseDouble(oldVersion);
+			newV= Double.parseDouble(newVersion);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		if (oldV > newV || oldV == newV) return v_old;
+		else if (oldV < newV) return v_new;
+		else return v_old;
+	}
+	public boolean shouldUpdate(String newVersion) {
+		if (getHigherVersion(this.localVersion, newVersion) == newVersion) return true;
+		else return false;
+	}
+	public void update() {
+		if (this.localUpdateFile.isDirectory()) this.localUpdateFile = new File(this.localUpdateFile, (this.appName+".jar").replaceAll("[", "").replaceAll("]", ""));
+		File updateVer = downloadFile(this.localUpdateFile.getName(), this.remoteUpdateURL);
+		try {
+			Files.move(updateVer.toPath(), this.localUpdateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			hasUpdated = true;
+			System.out.println(appName+" updated from "+localVersion+" to "+remoteVersion);
+		} catch (IOException e) {
+			System.out.println(appName+" Update downloaded but couldn't be installed, trying to move it to: /manual_update/"+appName.replaceAll("[", "").replaceAll("]", "")+".jar");
+			try {
+				Files.move(updateVer.toPath(), new File(this.localUpdateFile.toPath()+"/manual_update/"+(appName.replaceAll("[", "").replaceAll("]", ""))+".jar").toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException ex) {
+				System.out.println(appName+" Update couldn't be moved... aborting update, printing stacktrace:");
+				ex.printStackTrace();
+			}
 		}
 	}
 }
