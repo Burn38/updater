@@ -16,22 +16,22 @@ public class Updater {
 	private boolean caseSensitive = false;
 	private URL remoteUpdateURL = null;
 	private File localUpdateFile = null;
-	private String appName = null;
+	private String appName = "[Updater]";
 	private boolean hasUpdated = false;
 	private boolean isUpdated = false;
 	
 	public Updater(String localVersion, boolean caseSensitive, URL remoteUpdateURL, File localUpdateFile){
-		System.out.println("Creating new updater, please wait...");
+		System.out.println(appName+"Creating new updater, please wait...");
 		this.instance = this;
 		this.localVersion = localVersion;
 		this.caseSensitive = caseSensitive;
 		this.remoteUpdateURL = remoteUpdateURL;
 		this.localUpdateFile = localUpdateFile;
-		System.out.println("New updater was created: ");
+		System.out.println(appName+"New updater was created: ");
 		String remoteVersion = "`NULL`"; try {fetchRemoteVersion();remoteVersion=this.remoteVersion;} catch (IOException ex){remoteVersion = "VERSION_NOT_FOUND";ex.printStackTrace();};
-		System.out.println("VERSION: "+localVersion+" -> "+remoteVersion);
-		System.out.println("FILE: "+remoteUpdateURL.toString()+" -> "+localUpdateFile.getPath());
 		appName = "["+appName+"] ";
+		System.out.println(appName+"VERSION: "+localVersion+" -> "+remoteVersion);
+		System.out.println(appName+"FILE: "+remoteUpdateURL.toString()+" -> "+localUpdateFile.getPath());
 		if (shouldUpdate(remoteVersion)) {
 			System.out.println(appName+" updating to "+remoteVersion);
 			update();
@@ -77,6 +77,7 @@ public class Updater {
 		}
 		 //Code to download
 		  try {
+			System.out.println(appName+"Downloading file "+file_name+file_extension+" (size:"+url.openConnection().getContentLength()+")");
 			Files.copy(url.openStream(), toWrite.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -89,21 +90,21 @@ public class Updater {
 		nurl = remoteVersionURL;
 		if (nurl.contains("dropbox.com") && !nurl.contains("?dl=")) suffix = "?dl=1";
 		nurl = nurl+suffix;
-		System.out.println("NURL: "+nurl);
+		System.out.println(appName+"NURL: "+nurl);
 		URL remoteVerURL = new URL(nurl);
 		File dlFile = downloadFile("links.yml",remoteVerURL);
 		if (dlFile != null) {
 			if (dlFile.getCanonicalFile().getName().endsWith(".yml")) {
 				
-				System.out.println((dlFile == null ? "(NULL_FILE)" : "") +"VERSION FILE URL GOTTEN: "+getLine(dlFile, "version"));
+				System.out.println(appName+(dlFile == null ? "(NULL_FILE)" : "") +"VERSION FILE URL GOTTEN: "+getLine(dlFile, "version"));
 				String version_link = getLine(dlFile, "version");
 				String update_link = getLine(dlFile, "update");
 				this.remoteUpdateURL = new URL(update_link);
 				URL versionURL = new URL(version_link);
 				dlFile.delete();
 				dlFile = downloadFile("plugin.yml", versionURL);
-			} else System.out.println("ERROR: FILE NOT YML");
-		} else System.out.println("ERROR: FILE NOT DOWNLOADED");
+			} else System.out.println(appName+"ERROR: FILE NOT YML");
+		} else System.out.println(appName+"ERROR: FILE NOT DOWNLOADED");
 		
 		this.remoteVersion = getLine(dlFile, "version");
 		this.appName = getLine(dlFile, "name");
