@@ -16,27 +16,23 @@ public class Updater {
 	private boolean caseSensitive = false;
 	private URL remoteUpdateURL = null;
 	private File localUpdateFile = null;
-	private String appName = "[Updater]";
+	private String appName = "[Updater] ";
 	private boolean hasUpdated = false;
 	private boolean isUpdated = false;
 	
 	public Updater(String localVersion, boolean caseSensitive, URL remoteUpdateURL, File localUpdateFile){
-		System.out.println(appName+"Creating new updater, please wait...");
+		System.out.println(appName+"Checking for update, please wait...");
 		this.instance = this;
 		this.localVersion = localVersion;
 		this.caseSensitive = caseSensitive;
 		this.remoteUpdateURL = remoteUpdateURL;
 		this.localUpdateFile = localUpdateFile;
-		System.out.println(appName+"New updater was created: ");
 		String remoteVersion = "`NULL`"; try {fetchRemoteVersion();remoteVersion=this.remoteVersion;} catch (IOException ex){remoteVersion = "VERSION_NOT_FOUND";ex.printStackTrace();};
-		appName = "["+appName+"] ";
-		System.out.println(appName+"VERSION: "+localVersion+" -> "+remoteVersion);
-		System.out.println(appName+"FILE: "+remoteUpdateURL.toString()+" -> "+localUpdateFile.getPath());
 		if (shouldUpdate(remoteVersion)) {
-			System.out.println(appName+" updating to "+remoteVersion);
+			System.out.println(appName+"Update to "+remoteVersion+" found !");
 			update();
 		} else {
-			System.out.println(appName+" is up to date");
+			System.out.println(appName+"No updates found");
 			isUpdated = true;
 		}
 	}
@@ -69,7 +65,7 @@ public class Updater {
 	public File downloadFile(String filename, URL url) {
 		File toWrite = new File(filename);
 		String file_name = filename.substring(0, filename.lastIndexOf("."));
-		String file_extension = "."+filename.substring(filename.lastIndexOf("."));
+		String file_extension = filename.substring(filename.lastIndexOf("."));
 		try {
 			toWrite = File.createTempFile(file_name, file_extension);
 		} catch (IOException e) {
@@ -77,7 +73,8 @@ public class Updater {
 		}
 		 //Code to download
 		  try {
-			System.out.println(appName+"Downloading file "+file_name+file_extension+" (size:"+url.openConnection().getContentLength()+")");
+			int size = url.openConnection().getContentLength();
+			if (!file_extension.equalsIgnoreCase(".yml")) System.out.println(appName+"Downloading file "+file_name+file_extension+" (size:"+(size > 1024 ? size/1024 : size)+(size > 1024 ? "Ko" : " octet")+")");
 			Files.copy(url.openStream(), toWrite.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,25 +87,14 @@ public class Updater {
 		nurl = remoteVersionURL;
 		if (nurl.contains("dropbox.com") && !nurl.contains("?dl=")) suffix = "?dl=1";
 		nurl = nurl+suffix;
-		System.out.println(appName+"NURL: "+nurl);
-		URL remoteVerURL = new URL(nurl);
-		File dlFile = downloadFile("links.yml",remoteVerURL);
+		File dlFile = downloadFile("plugin.yml",new URL(nurl));
 		if (dlFile != null) {
 			if (dlFile.getCanonicalFile().getName().endsWith(".yml")) {
-				
-				System.out.println(appName+(dlFile == null ? "(NULL_FILE)" : "") +"VERSION FILE URL GOTTEN: "+getLine(dlFile, "version"));
-				String version_link = getLine(dlFile, "version");
-				String update_link = getLine(dlFile, "update");
-				this.remoteUpdateURL = new URL(update_link);
-				URL versionURL = new URL(version_link);
+				this.remoteUpdateURL = new URL(getLine(dlFile, "update-link"));
+				this.remoteVersion = getLine(dlFile, "version");
 				dlFile.delete();
-				dlFile = downloadFile("plugin.yml", versionURL);
-			} else System.out.println(appName+"ERROR: FILE NOT YML");
-		} else System.out.println(appName+"ERROR: FILE NOT DOWNLOADED");
-		
-		this.remoteVersion = getLine(dlFile, "version");
-		this.appName = getLine(dlFile, "name");
-		dlFile.delete();
+			}
+		}
 	}
 	
 	public String getLine(File file, String str) {
@@ -163,7 +149,7 @@ public class Updater {
 		try {
 			Files.move(updateVer.toPath(), this.localUpdateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			hasUpdated = true;
-			System.out.println(appName+" updated from "+localVersion+" to "+remoteVersion);
+			System.out.println(appName+"Updated from "+localVersion+" to "+remoteVersion);
 		} catch (IOException e) {
 			System.out.println(appName+" Update downloaded but couldn't be installed, trying to move it to: /manual_update/"+appName.replaceAll("[", "").replaceAll("]", "")+".jar");
 			try {
